@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="800" fill="#ffffff"/>
+  
+  <!-- Main Border -->
+  <rect x="50" y="50" width="700" height="700" fill="none" stroke="#2c3e50" stroke-width="8"/>
+  
+  <!-- Recycle Symbol -->
+  <g transform="translate(400, 400)">
+    <!-- Green Circle Background -->
+    <circle cx="0" cy="0" r="250" fill="#27ae60" opacity="0.9"/>
+    
+    <!-- White Recycle Symbol -->
+    <g transform="scale(2.5)">
+      <!-- Arrow 1 -->
+      <path d="M -30,-50 L -10,-50 L -10,-40 L 10,-60 L -10,-80 L -10,-70 L -30,-70 Z" 
+            fill="white" transform="rotate(0)"/>
+      
+      <!-- Arrow 2 -->
+      <path d="M -30,-50 L -10,-50 L -10,-40 L 10,-60 L -10,-80 L -10,-70 L -30,-70 Z" 
+            fill="white" transform="rotate(120)"/>
+      
+      <!-- Arrow 3 -->
+      <path d="M -30,-50 L -10,-50 L -10,-40 L 10,-60 L -10,-80 L -10,-70 L -30,-70 Z" 
+            fill="white" transform="rotate(240)"/>
+    </g>
+  </g>
+  
+  <!-- Corner Markers for Better Tracking -->
+  <circle cx="100" cy="100" r="30" fill="#e74c3c"/>
+  <circle cx="700" cy="100" r="30" fill="#3498db"/>
+  <circle cx="100" cy="700" r="30" fill="#f39c12"/>
+  <circle cx="700" cy="700" r="30" fill="#9b59b6"/>
+  
+  <!-- Text -->
+  <text x="400" y="650" font-family="Arial, sans-serif" font-size="36" font-weight="bold" 
+        text-anchor="middle" fill="#2c3e50">
+    DAUR ULANG SAMPAH
+  </text>
+  
+  <!-- QR Pattern Elements for Better Detection -->
+  <rect x="150" y="150" width="80" height="80" fill="#2c3e50"/>
+  <rect x="570" y="150" width="80" height="80" fill="#2c3e50"/>
+  <rect x="150" y="570" width="80" height="80" fill="#2c3e50"/>
+  
+  <rect x="170" y="170" width="40" height="40" fill="white"/>
+  <rect x="590" y="170" width="40" height="40" fill="white"/>
+  <rect x="170" y="590" width="40" height="40" fill="white"/>
+</svg>
