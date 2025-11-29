@@ -63,3 +63,69 @@ a-scene {
         opacity: 1;
     }
 }
+
+/* Trash Selection Buttons */
+#trash-selector {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 15px;
+}
+
+.trash-button {
+    padding: 15px 25px;
+    border: none;
+    border-radius: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.trash-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.trash-button:active {
+    transform: translateY(0);
+}
+
+.trash-button.selected {
+    border: 3px solid white;
+    transform: scale(1.1);
+}
+
+#btn-organik {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+#btn-anorganik {
+    background: linear-gradient(135deg, #f44336, #da190b);
+}
+
+#btn-hazardous {
+    background: linear-gradient(135deg, #2196F3, #0b7dda);
+}
+
+/* Trash Preview */
+#trash-preview {
+    position: fixed;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    width: 200px;
+    height: 200px;
+    pointer-events: none;
+}
+
+#trash-preview canvas {
+    width: 100% !important;
+    height: 100% !important;
+}

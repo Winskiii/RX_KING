@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Paper Toss - Daur Ulang Sampah</title>
+    <title>AR Trash Sorting - Waste Recycling Game</title>
     
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <!-- A-Frame Physics System -->
     <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.0.1/dist/aframe-physics-system.min.js"></script>
+    <!-- Three.js GLTFLoader for preview -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
     
     <!-- External CSS -->
     <link rel="stylesheet" href="./css/style.css">
@@ -18,17 +20,34 @@
 <body>
     <!-- UI Overlay -->
     <div id="ui-overlay">
-        <div id="score-display">Skor: 0</div>
+        <div id="score-display">Score: 0</div>
         <div id="instructions">
-            📱 Arahkan kamera ke stiker target<br>
-            👆 Tap layar untuk melempar kertas<br>
-            🎯 Masukkan ke tong yang sesuai!
+            📱 Scan target marker once<br>
+            🎮 Select trash type with buttons<br>
+            👆 Tap (Mobile) or Click (Desktop)<br>
+            🎯 Sort into correct bin!
         </div>
     </div>
     
     <div id="throw-indicator" class="hidden">
-        TAP untuk LEMPAR! 🎯
+        TAP to THROW! 🎯
     </div>
+    
+    <!-- Trash Selection Buttons -->
+    <div id="trash-selector" class="hidden">
+        <button id="btn-organik" class="trash-button" data-trash-type="organik">
+            🥬 ORGANIC
+        </button>
+        <button id="btn-anorganik" class="trash-button" data-trash-type="anorganik">
+            🥤 INORGANIC
+        </button>
+        <button id="btn-hazardous" class="trash-button" data-trash-type="hazardous">
+            ⚠️ HAZARDOUS
+        </button>
+    </div>
+    
+    <!-- Trash Preview Container -->
+    <div id="trash-preview"></div>
 
     <!-- AR Scene -->
     <a-scene 
@@ -44,12 +63,12 @@
             <!-- Trash Models -->
             <a-asset-item id="trash-organik" src="./assets/models/trash-organik.glb"></a-asset-item>
             <a-asset-item id="trash-anorganik" src="./assets/models/trash-anorganik.glb"></a-asset-item>
-            <a-asset-item id="trash-kertas" src="./assets/models/trash-kertas.glb"></a-asset-item>
+            <a-asset-item id="trash-hazardous" src="./assets/models/trash-kertas.glb"></a-asset-item>
             
             <!-- Bin Models -->
             <a-asset-item id="bin-organik" src="./assets/models/bin-organik.glb"></a-asset-item>
             <a-asset-item id="bin-anorganik" src="./assets/models/bin-anorganik.glb"></a-asset-item>
-            <a-asset-item id="bin-kertas" src="./assets/models/bin-kertas.glb"></a-asset-item>
+            <a-asset-item id="bin-hazardous" src="./assets/models/bin-kertas.glb"></a-asset-item>
         </a-assets>
         
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="objects: .clickable"></a-camera>
@@ -59,30 +78,30 @@
         <a-entity id="marker" mindar-image-target="targetIndex: 0">
             <a-box position="0 -0.3 0" width="2" height="0.1" depth="1.5" color="#333" opacity="0.3" static-body></a-box>
             
-            <!-- Tong Sampah Merah (Anorganik) dengan Model 3D -->
+            <!-- Red Bin (Inorganic) with 3D Model -->
             <a-entity position="-0.6 0 0">
                 <a-gltf-model src="#bin-anorganik" position="0 -0.05 0" scale="0.5 0.5 0.5"></a-gltf-model>
-                <a-text value="ANORGANIK" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
+                <a-text value="INORGANIC" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
                 <a-cylinder class="goal-zone" data-bin-type="anorganik" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
             
-            <!-- Tong Sampah Hijau (Organik) dengan Model 3D -->
+            <!-- Green Bin (Organic) with 3D Model -->
             <a-entity position="0 0 0">
                 <a-gltf-model src="#bin-organik" position="0 -0.05 0" scale="0.5 0.5 0.5"></a-gltf-model>
-                <a-text value="ORGANIK" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
+                <a-text value="ORGANIC" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
                 <a-cylinder class="goal-zone" data-bin-type="organik" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
             
-            <!-- Tong Sampah Biru (Kertas) dengan Model 3D -->
+            <!-- Blue Bin (Hazardous) with 3D Model -->
             <a-entity position="0.6 0 0">
-                <a-gltf-model src="#bin-kertas" position="0 -0.05 0" scale="0.5 0.5 0.5"></a-gltf-model>
-                <a-text value="KERTAS" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
-                <a-cylinder class="goal-zone" data-bin-type="kertas" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
+                <a-gltf-model src="#bin-hazardous" position="0 -0.05 0" scale="0.5 0.5 0.5"></a-gltf-model>
+                <a-text value="HAZARDOUS" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
+                <a-cylinder class="goal-zone" data-bin-type="hazardous" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
             
-            <!-- Display Area untuk Sampah (Hidden by default) -->
+            <!-- Trash Display Area in AR Scene (Hidden, will show in UI preview) -->
             <a-entity id="trash-display" position="0 0.5 -0.3" visible="false">
-                <a-gltf-model id="trash-model" src="#trash-organik" scale="0.8 0.8 0.8"></a-gltf-model>
+                <a-gltf-model id="trash-model" src="#trash-organik" scale="0.3 0.3 0.3"></a-gltf-model>
             </a-entity>
         </a-entity>
     </a-scene>
