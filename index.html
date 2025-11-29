@@ -39,6 +39,19 @@
         device-orientation-permission-ui="enabled: false"
         physics="gravity: -9.8; debug: false;">
         
+        <!-- Asset Management for 3D Models -->
+        <a-assets>
+            <!-- Trash Models -->
+            <a-asset-item id="trash-organik" src="./assets/models/trash-organik.glb"></a-asset-item>
+            <a-asset-item id="trash-anorganik" src="./assets/models/trash-anorganik.glb"></a-asset-item>
+            <a-asset-item id="trash-kertas" src="./assets/models/trash-kertas.glb"></a-asset-item>
+            
+            <!-- Bin Models -->
+            <a-asset-item id="bin-organik" src="./assets/models/bin-organik.glb"></a-asset-item>
+            <a-asset-item id="bin-anorganik" src="./assets/models/bin-anorganik.glb"></a-asset-item>
+            <a-asset-item id="bin-kertas" src="./assets/models/bin-kertas.glb"></a-asset-item>
+        </a-assets>
+        
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="objects: .clickable"></a-camera>
         <a-entity light="type: ambient; color: #BBB; intensity: 0.8;"></a-entity>
         <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-0.5 1 1"></a-entity>
@@ -46,25 +59,30 @@
         <a-entity id="marker" mindar-image-target="targetIndex: 0">
             <a-box position="0 -0.3 0" width="2" height="0.1" depth="1.5" color="#333" opacity="0.3" static-body></a-box>
             
-            <!-- Tong Sampah Merah (Anorganik) -->
+            <!-- Tong Sampah Merah (Anorganik) dengan Model 3D -->
             <a-entity position="-0.6 0 0">
-                <a-cylinder id="tong-merah" color="#e74c3c" radius="0.15" height="0.4" position="0 -0.05 0"></a-cylinder>
+                <a-gltf-model src="#bin-anorganik" position="0 -0.05 0" scale="0.5 0.5 0.5"></a-gltf-model>
                 <a-text value="ANORGANIK" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
                 <a-cylinder class="goal-zone" data-bin-type="anorganik" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
             
-            <!-- Tong Sampah Hijau (Organik) -->
+            <!-- Tong Sampah Hijau (Organik) dengan Model 3D -->
             <a-entity position="0 0 0">
-                <a-cylinder id="tong-hijau" color="#27ae60" radius="0.15" height="0.4" position="0 -0.05 0"></a-cylinder>
+                <a-gltf-model src="#bin-organik" position="0 -0.05 0" scale="0.5 0.5 0.5"></a-gltf-model>
                 <a-text value="ORGANIK" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
                 <a-cylinder class="goal-zone" data-bin-type="organik" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
             
-            <!-- Tong Sampah Biru (Kertas) -->
+            <!-- Tong Sampah Biru (Kertas) dengan Model 3D -->
             <a-entity position="0.6 0 0">
-                <a-cylinder id="tong-biru" color="#3498db" radius="0.15" height="0.4" position="0 -0.05 0"></a-cylinder>
+                <a-gltf-model src="#bin-kertas" position="0 -0.05 0" scale="0.5 0.5 0.5"></a-gltf-model>
                 <a-text value="KERTAS" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
                 <a-cylinder class="goal-zone" data-bin-type="kertas" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
+            </a-entity>
+            
+            <!-- Display Area untuk Sampah (Hidden by default) -->
+            <a-entity id="trash-display" position="0 0.5 -0.3" visible="false">
+                <a-gltf-model id="trash-model" src="#trash-organik" scale="0.8 0.8 0.8"></a-gltf-model>
             </a-entity>
         </a-entity>
     </a-scene>
