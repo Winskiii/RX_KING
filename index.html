@@ -7,61 +7,13 @@
     
     <!-- A-Frame Core -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    
     <!-- MindAR Image Tracking -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    
     <!-- A-Frame Physics System -->
     <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.0.1/dist/aframe-physics-system.min.js"></script>
     
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-        
-        #ui-overlay {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 14px;
-        }
-        
-        #score-display {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        #instructions {
-            font-size: 12px;
-            color: #aaa;
-        }
-        
-        #throw-indicator {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(76, 175, 80, 0.9);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            z-index: 1000;
-        }
-        
-        .hidden {
-            display: none;
-        }
-    </style>
+    <!-- External CSS -->
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
     <!-- UI Overlay -->
@@ -87,326 +39,39 @@
         device-orientation-permission-ui="enabled: false"
         physics="gravity: -9.8; debug: false;">
         
-        <!-- Camera -->
-        <a-camera 
-            position="0 0 0" 
-            look-controls="enabled: false"
-            cursor="fuse: false; rayOrigin: mouse;"
-            raycaster="objects: .clickable">
-        </a-camera>
-        
-        <!-- Lights -->
+        <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="objects: .clickable"></a-camera>
         <a-entity light="type: ambient; color: #BBB; intensity: 0.8;"></a-entity>
         <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-0.5 1 1"></a-entity>
         
-        <!-- Image Target Anchor -->
         <a-entity id="marker" mindar-image-target="targetIndex: 0">
-            
-            <!-- Ground Platform (Invisible) -->
-            <a-box 
-                position="0 -0.3 0" 
-                width="2" 
-                height="0.1" 
-                depth="1.5"
-                color="#333"
-                opacity="0.3"
-                static-body>
-            </a-box>
+            <a-box position="0 -0.3 0" width="2" height="0.1" depth="1.5" color="#333" opacity="0.3" static-body></a-box>
             
             <!-- Tong Sampah Merah (Anorganik) -->
             <a-entity position="-0.6 0 0">
-                <a-cylinder 
-                    id="tong-merah"
-                    color="#e74c3c"
-                    radius="0.15"
-                    height="0.4"
-                    position="0 -0.05 0">
-                </a-cylinder>
-                <a-text 
-                    value="ANORGANIK"
-                    color="white"
-                    align="center"
-                    width="0.8"
-                    position="0 0.3 0"
-                    rotation="0 0 0">
-                </a-text>
-                <!-- Goal Zone - Di Mulut Tong -->
-                <a-cylinder
-                    class="goal-zone"
-                    data-bin-type="anorganik"
-                    position="0 0.15 0"
-                    radius="0.14"
-                    height="0.15"
-                    opacity="0"
-                    static-body>
-                </a-cylinder>
+                <a-cylinder id="tong-merah" color="#e74c3c" radius="0.15" height="0.4" position="0 -0.05 0"></a-cylinder>
+                <a-text value="ANORGANIK" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
+                <a-cylinder class="goal-zone" data-bin-type="anorganik" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
             
             <!-- Tong Sampah Hijau (Organik) -->
             <a-entity position="0 0 0">
-                <a-cylinder 
-                    id="tong-hijau"
-                    color="#27ae60"
-                    radius="0.15"
-                    height="0.4"
-                    position="0 -0.05 0">
-                </a-cylinder>
-                <a-text 
-                    value="ORGANIK"
-                    color="white"
-                    align="center"
-                    width="0.8"
-                    position="0 0.3 0"
-                    rotation="0 0 0">
-                </a-text>
-                <!-- Goal Zone - Di Mulut Tong -->
-                <a-cylinder
-                    class="goal-zone"
-                    data-bin-type="organik"
-                    position="0 0.15 0"
-                    radius="0.14"
-                    height="0.15"
-                    opacity="0"
-                    static-body>
-                </a-cylinder>
+                <a-cylinder id="tong-hijau" color="#27ae60" radius="0.15" height="0.4" position="0 -0.05 0"></a-cylinder>
+                <a-text value="ORGANIK" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
+                <a-cylinder class="goal-zone" data-bin-type="organik" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
             
             <!-- Tong Sampah Biru (Kertas) -->
             <a-entity position="0.6 0 0">
-                <a-cylinder 
-                    id="tong-biru"
-                    color="#3498db"
-                    radius="0.15"
-                    height="0.4"
-                    position="0 -0.05 0">
-                </a-cylinder>
-                <a-text 
-                    value="KERTAS"
-                    color="white"
-                    align="center"
-                    width="0.8"
-                    position="0 0.3 0"
-                    rotation="0 0 0">
-                </a-text>
-                <!-- Goal Zone - Di Mulut Tong -->
-                <a-cylinder
-                    class="goal-zone"
-                    data-bin-type="kertas"
-                    position="0 0.15 0"
-                    radius="0.14"
-                    height="0.15"
-                    opacity="0"
-                    static-body>
-                </a-cylinder>
+                <a-cylinder id="tong-biru" color="#3498db" radius="0.15" height="0.4" position="0 -0.05 0"></a-cylinder>
+                <a-text value="KERTAS" color="white" align="center" width="0.8" position="0 0.3 0" rotation="0 0 0"></a-text>
+                <a-cylinder class="goal-zone" data-bin-type="kertas" position="0 0.15 0" radius="0.14" height="0.15" opacity="0" static-body></a-cylinder>
             </a-entity>
-            
         </a-entity>
     </a-scene>
 
-    <script>
-        // Game State
-        let score = 0;
-        let isMarkerVisible = false;
-        let throwPower = 4.5; // Kekuatan lempar (lebih kuat)
-        let throwAngle = 45; // degrees (lebih tinggi)
-        let sceneReady = false;
-        
-        // DOM Elements
-        const scoreDisplay = document.getElementById('score-display');
-        const throwIndicator = document.getElementById('throw-indicator');
-        
-        // Wait for scene to be ready
-        const scene = document.querySelector('a-scene');
-        scene.addEventListener('loaded', () => {
-            console.log('✅ Scene loaded!');
-            sceneReady = true;
-            setupMarkerListeners();
-        });
-        
-        // Update Score Display
-        function updateScore(points) {
-            score += points;
-            scoreDisplay.textContent = `Skor: ${score}`;
-            
-            // Visual feedback
-            scoreDisplay.style.color = points > 0 ? '#4CAF50' : '#f44336';
-            setTimeout(() => {
-                scoreDisplay.style.color = 'white';
-            }, 500);
-        }
-        
-        // Setup marker detection
-        function setupMarkerListeners() {
-            const marker = document.querySelector('#marker');
-            if (!marker) {
-                console.error('❌ Marker not found!');
-                return;
-            }
-            
-            // Show/Hide Throw Indicator when marker is detected
-            marker.addEventListener('targetFound', event => {
-                console.log('✅ Marker detected!');
-                isMarkerVisible = true;
-                throwIndicator.classList.remove('hidden');
-                throwIndicator.textContent = 'TAP LAYAR untuk LEMPAR! 🎯';
-                throwIndicator.style.background = 'rgba(76, 175, 80, 0.9)';
-            });
-            
-            marker.addEventListener('targetLost', event => {
-                console.log('⚠️ Marker lost!');
-                isMarkerVisible = false;
-                throwIndicator.classList.add('hidden');
-            });
-        }
-        
-        // Create Paper Ball with improved physics
-        function createPaperBall() {
-            console.log('🎾 Creating paper ball...');
-            
-            const marker = document.querySelector('#marker');
-            if (!marker) {
-                console.error('❌ Marker not found!');
-                return;
-            }
-            
-            const ball = document.createElement('a-sphere');
-            
-            // Set ball properties - positioned relative to marker
-            ball.setAttribute('radius', '0.05');
-            ball.setAttribute('color', '#f4f4f4');
-            ball.setAttribute('shadow', 'cast: true');
-            ball.setAttribute('metalness', '0.2');
-            ball.setAttribute('roughness', '0.8');
-            
-            // Start position JAUH di depan user, rendah (bawah layar)
-            // Agar terlihat seperti melempar dari tangan
-            ball.setAttribute('position', '0 -0.3 -0.8');
-            
-            // Add physics body
-            ball.setAttribute('dynamic-body', {
-                shape: 'sphere',
-                mass: 0.2,
-                linearDamping: 0.01,
-                angularDamping: 0.01
-            });
-            
-            // Add to marker
-            marker.appendChild(ball);
-            console.log('✅ Ball added to scene at position: 0, -0.3, -0.8');
-            
-            // Visual feedback
-            throwIndicator.textContent = 'LEMPAR! 🚀';
-            throwIndicator.style.background = 'rgba(255, 152, 0, 0.9)';
-            setTimeout(() => {
-                throwIndicator.textContent = 'TAP untuk LEMPAR LAGI! 🎯';
-                throwIndicator.style.background = 'rgba(76, 175, 80, 0.9)';
-            }, 500);
-            
-            // Apply throw force after physics body is loaded
-            ball.addEventListener('body-loaded', function() {
-                console.log('⚙️ Physics body loaded');
-                setTimeout(() => {
-                    if (ball.body) {
-                        // Lemparan parabolik ke arah tong (forward + upward)
-                        const forceX = (Math.random() - 0.5) * 0.5; // Sedikit variasi horizontal
-                        const forceY = throwPower * 0.8; // Ke atas
-                        const forceZ = throwPower * 1.2; // Ke depan (positif karena tong di depan)
-                        
-                        const impulse = new CANNON.Vec3(forceX, forceY, forceZ);
-                        const worldPoint = new CANNON.Vec3(0, 0, 0);
-                        
-                        ball.body.applyImpulse(impulse, worldPoint);
-                        console.log('🚀 Ball thrown! Force:', forceX.toFixed(2), forceY.toFixed(2), forceZ.toFixed(2));
-                        
-                        // Add realistic spin
-                        ball.body.angularVelocity.set(
-                            Math.random() * 8 - 4,
-                            Math.random() * 8 - 4,
-                            Math.random() * 8 - 4
-                        );
-                    }
-                }, 50);
-            });
-            
-            // Collision detection
-            ball.addEventListener('collide', function(e) {
-                const collidedEl = e.detail.body.el;
-                
-                // Check if ball hit a goal zone
-                if (collidedEl && collidedEl.classList.contains('goal-zone')) {
-                    const binType = collidedEl.getAttribute('data-bin-type');
-                    console.log('🎯 GOAL! Scored in:', binType);
-                    
-                    // Award points
-                    updateScore(10);
-                    
-                    // Visual feedback
-                    throwIndicator.textContent = '🎉 MASUK! +10 Poin!';
-                    throwIndicator.style.background = 'rgba(76, 175, 80, 0.9)';
-                    
-                    // Change ball color
-                    ball.setAttribute('color', '#4CAF50');
-                    
-                    // Remove ball after scoring
-                    setTimeout(() => {
-                        if (ball.parentNode) {
-                            ball.parentNode.removeChild(ball);
-                        }
-                        throwIndicator.textContent = 'TAP untuk LEMPAR LAGI! 🎯';
-                    }, 1000);
-                } else {
-                    console.log('💥 Ball collided with:', collidedEl ? collidedEl.id : 'unknown');
-                }
-            });
-            
-            // Auto-remove ball after 5 seconds to prevent clutter
-            setTimeout(() => {
-                if (ball.parentNode) {
-                    console.log('🗑️ Removing old ball');
-                    ball.parentNode.removeChild(ball);
-                }
-            }, 5000);
-        }
-        
-        // Main throw handler
-        function handleThrow(event) {
-            console.log('👆 Screen tapped/clicked');
-            
-            if (!sceneReady) {
-                console.log('⏳ Scene not ready yet...');
-                return;
-            }
-            
-            if (!isMarkerVisible) {
-                console.log('⚠️ Marker not visible, cannot throw!');
-                throwIndicator.classList.remove('hidden');
-                throwIndicator.textContent = '⚠️ Arahkan ke MARKER dulu!';
-                throwIndicator.style.background = 'rgba(244, 67, 54, 0.9)';
-                setTimeout(() => {
-                    throwIndicator.classList.add('hidden');
-                }, 2000);
-                return;
-            }
-            
-            createPaperBall();
-        }
-        
-        // Click event for desktop
-        document.addEventListener('click', handleThrow);
-        
-        // Touch event for mobile
-        document.addEventListener('touchstart', (event) => {
-            event.preventDefault();
-            handleThrow(event);
-        }, { passive: false });
-        
-        // Console instructions
-        console.log('%c🎯 AR Paper Toss Game Loaded!', 'color: #4CAF50; font-size: 20px; font-weight: bold;');
-        console.log('%cInstructions:', 'color: #2196F3; font-size: 14px;');
-        console.log('1. Point camera at the target marker/sticker');
-        console.log('2. Tap screen to throw paper ball');
-        console.log('3. Score points by landing in bins!');
-        console.log('%c📝 Debug mode: Check console for throwing feedback', 'color: #FF9800');
-    </script>
+    <!-- External JavaScript Files -->
+    <script src="./js/ui.js"></script>
+    <script src="./js/physics.js"></script>
+    <script src="./js/game.js"></script>
 </body>
 </html>
