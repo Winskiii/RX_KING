@@ -16,6 +16,7 @@ const scene = document.querySelector('a-scene');
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM Ready!');
     setupTrashButtons();
+    setupTouchDragControls();
 });
 
 scene.addEventListener('loaded', () => {
@@ -95,6 +96,7 @@ function handleTrashSelection(trashType) {
     
     // Show the trash display
     showTrashDisplay(trashType);
+    activatePreviewDrag();
     
     updateThrowIndicator(`Throw ${trashNames[trashType]}! Tap to throw!`, 'rgba(255, 152, 0, 0.9)');
 }
@@ -176,6 +178,137 @@ function showTrashDisplay(trashType) {
     } else {
         console.error('❌ No model selected for type:', trashType);
     }
+}
+
+// ==============================
+// Touch drag + throw interaction
+// ==============================
+let dragState = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastY: 0,
+    lastTime: 0,
+    vx: 0,
+    vy: 0
+};
+
+function setupTouchDragControls() {
+    document.addEventListener('touchstart', onTouchStart, { passive: false });
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
+}
+
+function getActivePreviewModel() {
+    const o = document.querySelector('#trash-model-organik');
+    const a = document.querySelector('#trash-model-anorganik');
+    const h = document.querySelector('#trash-model-hazardous');
+    if (o && o.getAttribute('visible') === true) return o;
+    if (a && a.getAttribute('visible') === true) return a;
+    if (h && h.getAttribute('visible') === true) return h;
+    return null;
+}
+
+function activatePreviewDrag() {
+    // Center preview near bottom
+    const display = document.querySelector('#trash-display');
+    if (display) {
+        display.setAttribute('position', '0 -0.3 -0.4');
+    }
+    dragState.active = false;
+}
+
+function onTouchStart(e) {
+    // Ignore touches on UI buttons
+    if (e.target.classList && e.target.classList.contains('trash-btn')) return;
+    if (!gameState.currentTrashType) return;
+    const model = getActivePreviewModel();
+    if (!model) return;
+
+    e.preventDefault();
+    const t = e.touches[0];
+    dragState.active = true;
+    dragState.startX = dragState.lastX = t.clientX;
+    dragState.startY = dragState.lastY = t.clientY;
+    dragState.lastTime = performance.now();
+}
+
+function onTouchMove(e) {
+    if (!dragState.active) return;
+    const model = getActivePreviewModel();
+    if (!model) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const now = performance.now();
+
+    // Map screen movement to small offsets in world space
+    const dx = (t.clientX - dragState.lastX) / window.innerWidth; // -1..1
+    const dy = (t.clientY - dragState.lastY) / window.innerHeight;
+
+    const pos = model.object3D.position;
+    // In screen space: right increases X, down increases Y
+    pos.x += dx * 0.5;   // horizontal drag range
+    pos.y -= dy * 0.5;   // invert so up moves up
+    model.object3D.position.copy(pos);
+
+    // velocity estimation
+    const dt = Math.max(1, now - dragState.lastTime);
+    dragState.vx = (t.clientX - dragState.lastX) / dt; // px/ms
+    dragState.vy = (t.clientY - dragState.lastY) / dt;
+    dragState.lastX = t.clientX;
+    dragState.lastY = t.clientY;
+    dragState.lastTime = now;
+}
+
+function onTouchEnd() {
+    if (!dragState.active) return;
+    dragState.active = false;
+
+    // Convert swipe velocity to throw
+    const throwStrengthX = dragState.vx * 0.02; // tune factors
+    const throwStrengthY = -dragState.vy * 0.05; // upward when swipe up
+    const forwardStrength = 6; // constant forward
+
+    // Spawn physics trash at preview position
+    const container = typeof getPersistentObjectsContainer !== 'undefined' 
+        ? getPersistentObjectsContainer() 
+        : document.querySelector('#world-anchor');
+    if (!container) return;
+
+    const posRef = getActivePreviewModel();
+    const startPos = posRef ? posRef.object3D.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 0.2, -0.3);
+
+    const trash = document.createElement('a-entity');
+    const trashId = `thrown-trash-${Date.now()}`;
+    const modelSrc = gameState.currentTrashType === 'hazardous' ? '#trash-hazardous' : `#trash-${gameState.currentTrashType}`;
+
+    trash.setAttribute('id', trashId);
+    trash.setAttribute('position', `${startPos.x} ${startPos.y} ${startPos.z}`);
+    trash.setAttribute('gltf-model', modelSrc);
+    trash.setAttribute('scale', gameState.currentTrashType === 'anorganik' ? '0.35 0.35 0.35' : (gameState.currentTrashType === 'organik' ? '0.2 0.2 0.2' : '0.3 0.3 0.3'));
+    trash.setAttribute('dynamic-body', { shape: 'box', mass: 0.5 });
+    trash.classList.add('throwable-trash');
+    trash.setAttribute('data-trash-type', gameState.currentTrashType);
+    container.appendChild(trash);
+
+    // Apply impulse
+    setTimeout(() => {
+        const el = document.querySelector(`#${trashId}`);
+        if (el && el.body) {
+            const impulse = new CANNON.Vec3(throwStrengthX, Math.max(2, throwStrengthY), forwardStrength);
+            el.body.applyImpulse(impulse, new CANNON.Vec3(0, 0, 0));
+            updateThrowIndicator('🚀 THROW!', 'rgba(255, 152, 0, 0.9)');
+        }
+    }, 50);
+
+    // Hide preview models after throw
+    const o = document.querySelector('#trash-model-organik');
+    const a = document.querySelector('#trash-model-anorganik');
+    const h = document.querySelector('#trash-model-hazardous');
+    if (o) o.setAttribute('visible', 'false');
+    if (a) a.setAttribute('visible', 'false');
+    if (h) h.setAttribute('visible', 'false');
 }
 
 function hideTrashDisplay() {
