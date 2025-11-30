@@ -16,7 +16,6 @@ const scene = document.querySelector('a-scene');
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM Ready!');
     setupTrashButtons();
-    setupRecenterButton();
 });
 
 scene.addEventListener('loaded', () => {
@@ -27,6 +26,34 @@ scene.addEventListener('loaded', () => {
     if (typeof initWorldAnchorSystem !== 'undefined') {
         initWorldAnchorSystem();
     }
+    
+    // Check if models are loaded
+    setTimeout(() => {
+        const organikModel = document.querySelector('#trash-model-organik');
+        const anorganikModel = document.querySelector('#trash-model-anorganik');
+        const hazardousModel = document.querySelector('#trash-model-hazardous');
+        
+        console.log('%c🎨 Checking trash models...', 'color: #9C27B0; font-weight: bold;');
+        console.log('Organik model:', organikModel ? '✅ Found' : '❌ Missing');
+        console.log('Anorganik model:', anorganikModel ? '✅ Found' : '❌ Missing');
+        console.log('Hazardous model:', hazardousModel ? '✅ Found' : '❌ Missing');
+        
+        if (organikModel) {
+            organikModel.addEventListener('model-loaded', () => {
+                console.log('✅ ORGANIC model GLB loaded');
+            });
+        }
+        if (anorganikModel) {
+            anorganikModel.addEventListener('model-loaded', () => {
+                console.log('✅ INORGANIC model GLB loaded');
+            });
+        }
+        if (hazardousModel) {
+            hazardousModel.addEventListener('model-loaded', () => {
+                console.log('✅ HAZARDOUS model GLB loaded');
+            });
+        }
+    }, 1000);
     
     logInstructions();
 });
@@ -59,7 +86,6 @@ function setupTrashButtons() {
 function handleTrashSelection(trashType) {
     console.log('🗑️ Selected trash type:', trashType);
     gameState.currentTrashType = trashType;
-    showTrashDisplay(trashType);
     
     const trashNames = {
         'organik': 'ORGANIC',
@@ -67,28 +93,99 @@ function handleTrashSelection(trashType) {
         'hazardous': 'HAZARDOUS'
     };
     
+    // Show the trash display
+    showTrashDisplay(trashType);
+    
     updateThrowIndicator(`Throw ${trashNames[trashType]}! Tap to throw!`, 'rgba(255, 152, 0, 0.9)');
 }
 
 function showTrashDisplay(trashType) {
+    console.log('🔍 showTrashDisplay called with:', trashType);
+    console.log('Scene ready?', gameState.sceneReady);
+    
+    // Wait for scene if not ready
+    if (!gameState.sceneReady) {
+        console.warn('⏳ Scene not ready, waiting...');
+        setTimeout(() => showTrashDisplay(trashType), 500);
+        return;
+    }
+    
+    // Get all trash models
+    const organikModel = document.querySelector('#trash-model-organik');
+    const anorganikModel = document.querySelector('#trash-model-anorganik');
+    const hazardousModel = document.querySelector('#trash-model-hazardous');
     const trashDisplay = document.querySelector('#trash-display');
-    const trashModel = document.querySelector('#trash-model');
     
-    if (!trashDisplay || !trashModel) return;
+    console.log('📦 Elements found:', {
+        organik: !!organikModel,
+        anorganik: !!anorganikModel,
+        hazardous: !!hazardousModel,
+        display: !!trashDisplay
+    });
     
-    // Update model source based on trash type
-    const modelSrc = trashType === 'hazardous' ? '#trash-kertas' : `#trash-${trashType}`;
-    trashModel.setAttribute('src', modelSrc);
-    trashDisplay.setAttribute('visible', 'true');
+    if (!organikModel || !anorganikModel || !hazardousModel) {
+        console.error('❌ Models not found! Checking scene...');
+        console.log('Scene children:', scene.children.length);
+        return;
+    }
     
-    console.log(`📦 Showing trash model: ${trashType}`);
+    // Make sure trash-display is visible
+    if (trashDisplay) {
+        trashDisplay.object3D.visible = true;
+        console.log('✓ trash-display container visible');
+    }
+    
+    // Hide all trash models first
+    organikModel.object3D.visible = false;
+    anorganikModel.object3D.visible = false;
+    hazardousModel.object3D.visible = false;
+    
+    console.log('✓ All models hidden');
+    
+    // Show only the selected trash type
+    let selectedModel = null;
+    if (trashType === 'organik') {
+        selectedModel = organikModel;
+        console.log('👉 Showing ORGANIC model');
+    } else if (trashType === 'anorganik') {
+        selectedModel = anorganikModel;
+        console.log('👉 Showing INORGANIC model');
+    } else if (trashType === 'hazardous') {
+        selectedModel = hazardousModel;
+        console.log('👉 Showing HAZARDOUS model');
+    }
+    
+    if (selectedModel) {
+        // Use object3D.visible for immediate effect
+        selectedModel.object3D.visible = true;
+        selectedModel.setAttribute('visible', 'true');
+        
+        // Add scale animation (scale to 0.12 to match HTML)
+        selectedModel.setAttribute('scale', '0.01 0.01 0.01');
+        selectedModel.setAttribute('animation', {
+            property: 'scale',
+            from: '0.01 0.01 0.01',
+            to: '0.12 0.12 0.12',
+            dur: 500,
+            easing: 'easeOutElastic'
+        });
+        
+        console.log('✅ Model visible:', selectedModel.object3D.visible);
+        console.log('Position:', selectedModel.object3D.position);
+        console.log('Scale:', selectedModel.object3D.scale);
+    } else {
+        console.error('❌ No model selected for type:', trashType);
+    }
 }
 
 function hideTrashDisplay() {
-    const trashDisplay = document.querySelector('#trash-display');
-    if (trashDisplay) {
-        trashDisplay.setAttribute('visible', 'false');
-    }
+    const organikModel = document.querySelector('#trash-model-organik');
+    const anorganikModel = document.querySelector('#trash-model-anorganik');
+    const hazardousModel = document.querySelector('#trash-model-hazardous');
+    
+    if (organikModel) organikModel.setAttribute('visible', 'false');
+    if (anorganikModel) anorganikModel.setAttribute('visible', 'false');
+    if (hazardousModel) hazardousModel.setAttribute('visible', 'false');
 }
 
 function showTrashButtons() {
@@ -96,6 +193,14 @@ function showTrashButtons() {
     if (buttons) {
         buttons.classList.remove('hidden');
     }
+}
+
+function hideTrashButtons() {
+    const buttons = document.getElementById('trash-buttons');
+    if (buttons) {
+        buttons.classList.add('hidden');
+    }
+    hideTrashDisplay();
 }
 
 function handleThrow(event) {
@@ -138,19 +243,19 @@ function createPhysicsTrash() {
     const trashId = `thrown-trash-${Date.now()}`;
     
     // Different sizes for each trash type
-    let trashScale = '0.3 0.3 0.3'; // Default
+    let trashScale = '0.6 0.6 0.6'; // Default
     if (gameState.currentTrashType === 'organik') {
-        trashScale = '0.2 0.2 0.2'; // Tissue smaller
+        trashScale = '0.06 0.06 0.06'; // Tissue smaller
     } else if (gameState.currentTrashType === 'anorganik') {
-        trashScale = '0.35 0.35 0.35'; // Bottle bigger
+        trashScale = '0.3 0.3 0.3'; // Bottle bigger
     } else if (gameState.currentTrashType === 'hazardous') {
-        trashScale = '0.3 0.3 0.3'; // Battery medium
+        trashScale = '0.9 0.9 0.9'; // Battery medium
     }
     
-    const modelSrc = gameState.currentTrashType === 'hazardous' ? '#trash-kertas' : `#trash-${gameState.currentTrashType}`;
+    const modelSrc = gameState.currentTrashType === 'hazardous' ? '#trash-hazardous' : `#trash-${gameState.currentTrashType}`;
     
     trash.setAttribute('id', trashId);
-    trash.setAttribute('position', '0 0.5 -0.3');
+    trash.setAttribute('position', '0 0.2 -0.6');
     trash.setAttribute('gltf-model', modelSrc);
     trash.setAttribute('scale', trashScale);
     
@@ -248,18 +353,6 @@ function hideThrowIndicator() {
     }
 }
 
-// Helper functions for world-anchor.js
-function showThrowHint() {
-    showTrashButtons();
-    const btn = document.getElementById('recenter-btn');
-    if (btn) btn.classList.remove('hidden');
-}
-
-function hideThrowHint() {
-    // Keep buttons visible since bins are anchored
-    hideThrowIndicator();
-}
-
 // Event Listeners for both desktop and mobile
 document.addEventListener('click', handleThrow);
 document.addEventListener('touchstart', (event) => {
@@ -281,3 +374,7 @@ function logInstructions() {
     console.log('%c🔄 RECENTER: Use recenter button to reposition bins', 'color: #2196F3; font-weight: bold;');
     console.log('%c📝 Debug mode ON - Check console for throw info', 'color: #FF9800');
 }
+
+// Export functions for world-anchor.js
+window.showTrashButtons = showTrashButtons;
+window.hideTrashButtons = hideTrashButtons;
