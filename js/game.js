@@ -1,243 +1,106 @@
-/* filepath: d:\semester 7\Realitas X\final project\js\game.js */
+/* AR Trash Sorting Game - Combined with World Anchor */
 
 // Game State
 const gameState = {
     score: 0,
     isMarkerVisible: false,
     sceneReady: false,
-    currentTrashType: 'organik',
-    isLookingAtMarker: false,
-    binsAnchored: false,
-    anchoredBinsPosition: null,
-    trashPreviewScene: null,
-    trashPreviewCamera: null,
-    trashPreviewRenderer: null,
-    currentTrashModel: null
+    currentTrashType: null,
+    isLookingAtMarker: false
 };
-
-// Trash type array untuk random spawn
-const TRASH_TYPES = ['organik', 'anorganik', 'hazardous'];
 
 // Initialize game
 const scene = document.querySelector('a-scene');
 
+// Wait for document ready before setup
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOM Ready!');
+    setupTrashButtons();
+    setupRecenterButton();
+});
+
 scene.addEventListener('loaded', () => {
     console.log('✅ Scene loaded!');
     gameState.sceneReady = true;
-    setupMarkerListeners();
-    setupTrashButtons();
-    setupTrashPreview();
+    
+    // Initialize world anchor system
+    if (typeof initWorldAnchorSystem !== 'undefined') {
+        initWorldAnchorSystem();
+    }
+    
     logInstructions();
 });
 
-function setupMarkerListeners() {
-    const marker = document.querySelector('#marker');
-    if (!marker) {
-        console.error('❌ Marker not found!');
-        return;
-    }
-    
-    marker.addEventListener('targetFound', () => {
-        console.log('✅ Marker detected!');
-        gameState.isMarkerVisible = true;
-        
-        // Anchor bins pada deteksi pertama
-        if (!gameState.binsAnchored) {
-            anchorBinsToWorld();
-            showTrashSelector();
-            updateTrashSelection('organik'); // Set default trash
-        }
-        
-        updateThrowIndicator('📍 BINS READY - Select trash & tap to THROW!', 'rgba(76, 175, 80, 0.9)');
-    });
-    
-    marker.addEventListener('targetLost', () => {
-        console.log('⚠️ Marker lost!');
-        gameState.isMarkerVisible = false;
-        // Tidak hide trash selector karena bins sudah di-anchor
-        if (!gameState.binsAnchored) {
-            hideThrowIndicator();
-        }
-    });
-}
-
-function anchorBinsToWorld() {
-    const marker = document.querySelector('#marker');
-    const scene = document.querySelector('a-scene');
-    
-    if (!marker || !scene || gameState.binsAnchored) return;
-    
-    // Dapatkan posisi world dari marker
-    const markerWorldPosition = new THREE.Vector3();
-    marker.object3D.getWorldPosition(markerWorldPosition);
-    
-    const markerWorldRotation = new THREE.Quaternion();
-    marker.object3D.getWorldQuaternion(markerWorldRotation);
-    
-    console.log('🔗 Anchoring bins to world position:', markerWorldPosition);
-    
-    // Buat container untuk bins yang di-anchor
-    const anchoredContainer = document.createElement('a-entity');
-    anchoredContainer.setAttribute('id', 'anchored-bins');
-    anchoredContainer.object3D.position.copy(markerWorldPosition);
-    anchoredContainer.object3D.quaternion.copy(markerWorldRotation);
-    
-    // Pindahkan semua bin entities ke container baru
-    const binEntities = marker.querySelectorAll('a-entity:not(#trash-display)');
-    binEntities.forEach((binEntity, index) => {
-        // Skip ground box
-        if (binEntity.tagName === 'A-BOX') {
-            const groundClone = binEntity.cloneNode(true);
-            anchoredContainer.appendChild(groundClone);
-            return;
-        }
-        
-        // Clone bin dengan semua children-nya
-        const binClone = binEntity.cloneNode(true);
-        
-        // Hitung posisi world dari bin original
-        const binWorldPos = new THREE.Vector3();
-        binEntity.object3D.getWorldPosition(binWorldPos);
-        
-        // Set posisi relatif terhadap anchored container
-        const relativePos = binWorldPos.sub(markerWorldPosition);
-        binClone.object3D.position.copy(relativePos);
-        
-        anchoredContainer.appendChild(binClone);
-    });
-    
-    // Tambahkan anchored container ke scene
-    scene.appendChild(anchoredContainer);
-    
-    gameState.binsAnchored = true;
-    gameState.anchoredBinsPosition = markerWorldPosition;
-    
-    console.log('✅ Bins anchored successfully!');
-}
-
 function setupTrashButtons() {
-    const buttons = document.querySelectorAll('.trash-button');
-    buttons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent throw action
-            const trashType = button.getAttribute('data-trash-type');
-            updateTrashSelection(trashType);
+    const btnOrganik = document.getElementById('btn-organik');
+    const btnAnorganik = document.getElementById('btn-anorganik');
+    const btnHazardous = document.getElementById('btn-hazardous');
+    
+    if (btnOrganik) {
+        btnOrganik.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleTrashSelection('organik');
         });
-    });
+    }
+    if (btnAnorganik) {
+        btnAnorganik.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleTrashSelection('anorganik');
+        });
+    }
+    if (btnHazardous) {
+        btnHazardous.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleTrashSelection('hazardous');
+        });
+    }
 }
 
-function updateTrashSelection(trashType) {
+function handleTrashSelection(trashType) {
+    console.log('🗑️ Selected trash type:', trashType);
     gameState.currentTrashType = trashType;
+    showTrashDisplay(trashType);
     
-    // Update button visual
-    document.querySelectorAll('.trash-button').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-    const selectedButton = document.querySelector(`[data-trash-type="${trashType}"]`);
-    if (selectedButton) {
-        selectedButton.classList.add('selected');
-    }
+    const trashNames = {
+        'organik': 'ORGANIC',
+        'anorganik': 'INORGANIC',
+        'hazardous': 'HAZARDOUS'
+    };
     
-    // Update preview
-    updateTrashPreview(trashType);
-    
-    console.log('🗑️ Trash selected:', trashType);
+    updateThrowIndicator(`Throw ${trashNames[trashType]}! Tap to throw!`, 'rgba(255, 152, 0, 0.9)');
 }
 
-function setupTrashPreview() {
-    const previewContainer = document.getElementById('trash-preview');
-    if (!previewContainer) return;
+function showTrashDisplay(trashType) {
+    const trashDisplay = document.querySelector('#trash-display');
+    const trashModel = document.querySelector('#trash-model');
     
-    // Create Three.js scene for preview
-    const width = 200;
-    const height = 200;
+    if (!trashDisplay || !trashModel) return;
     
-    gameState.trashPreviewScene = new THREE.Scene();
-    gameState.trashPreviewCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-    gameState.trashPreviewCamera.position.set(0, 0, 2);
+    // Update model source based on trash type
+    const modelSrc = trashType === 'hazardous' ? '#trash-kertas' : `#trash-${trashType}`;
+    trashModel.setAttribute('src', modelSrc);
+    trashDisplay.setAttribute('visible', 'true');
     
-    gameState.trashPreviewRenderer = new THREE.WebGLRenderer({ 
-        alpha: true, 
-        antialias: true 
-    });
-    gameState.trashPreviewRenderer.setSize(width, height);
-    gameState.trashPreviewRenderer.setClearColor(0x000000, 0);
-    previewContainer.appendChild(gameState.trashPreviewRenderer.domElement);
-    
-    // Add lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    gameState.trashPreviewScene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    directionalLight.position.set(1, 1, 1);
-    gameState.trashPreviewScene.add(directionalLight);
-    
-    // Start animation loop
-    animateTrashPreview();
+    console.log(`📦 Showing trash model: ${trashType}`);
 }
 
-function updateTrashPreview(trashType) {
-    if (!gameState.trashPreviewScene) return;
-    
-    // Remove old model
-    if (gameState.currentTrashModel) {
-        gameState.trashPreviewScene.remove(gameState.currentTrashModel);
-    }
-    
-    // Load new model
-    const loader = new THREE.GLTFLoader();
-    const modelPath = `./assets/models/trash-${trashType}.glb`;
-    
-    // Set ukuran berbeda untuk setiap jenis sampah
-    let modelScale = 0.5; // Default
-    if (trashType === 'organik') {
-        modelScale = 0.25; // Tissue lebih kecil
-    } else if (trashType === 'anorganik') {
-        modelScale = 0.6; // Botol lebih besar
-    } else if (trashType === 'hazardous') {
-        modelScale = 0.5; // Battery ukuran sedang
-    }
-    
-    loader.load(modelPath, (gltf) => {
-        gameState.currentTrashModel = gltf.scene;
-        gameState.currentTrashModel.scale.set(modelScale, modelScale, modelScale);
-        gameState.trashPreviewScene.add(gameState.currentTrashModel);
-        console.log(`✅ Loaded preview model: ${trashType} with scale ${modelScale}`);
-    }, undefined, (error) => {
-        console.error(`❌ Error loading model ${modelPath}:`, error);
-    });
-}
-
-function animateTrashPreview() {
-    requestAnimationFrame(animateTrashPreview);
-    
-    // SPINNING DIHAPUS - model tidak berputar lagi
-    // if (gameState.currentTrashModel) {
-    //     gameState.currentTrashModel.rotation.y += 0.02;
-    // }
-    
-    if (gameState.trashPreviewRenderer && gameState.trashPreviewScene && gameState.trashPreviewCamera) {
-        gameState.trashPreviewRenderer.render(gameState.trashPreviewScene, gameState.trashPreviewCamera);
+function hideTrashDisplay() {
+    const trashDisplay = document.querySelector('#trash-display');
+    if (trashDisplay) {
+        trashDisplay.setAttribute('visible', 'false');
     }
 }
 
-function showTrashSelector() {
-    const selector = document.getElementById('trash-selector');
-    if (selector) {
-        selector.classList.remove('hidden');
-    }
-}
-
-function hideTrashSelector() {
-    const selector = document.getElementById('trash-selector');
-    if (selector) {
-        selector.classList.add('hidden');
+function showTrashButtons() {
+    const buttons = document.getElementById('trash-buttons');
+    if (buttons) {
+        buttons.classList.remove('hidden');
     }
 }
 
 function handleThrow(event) {
     // Prevent throw if clicking on buttons
-    if (event.target.classList.contains('trash-button')) {
+    if (event.target.classList.contains('trash-btn') || event.target.id === 'recenter-btn') {
         return;
     }
     
@@ -246,9 +109,15 @@ function handleThrow(event) {
         return;
     }
     
-    if (!gameState.binsAnchored) {
-        console.log('⚠️ Bins not anchored yet! Scan marker first.');
-        updateThrowIndicator('⚠️ Scan MARKER first!', 'rgba(244, 67, 54, 0.9)');
+    if (!gameState.currentTrashType) {
+        console.log('⚠️ No trash selected!');
+        updateThrowIndicator('⚠️ Select trash first!', 'rgba(244, 67, 54, 0.9)');
+        return;
+    }
+    
+    if (!worldTrackingState || !worldTrackingState.hasSpawned) {
+        console.log('⚠️ Bins not anchored yet!');
+        updateThrowIndicator('⚠️ Scan marker first!', 'rgba(244, 67, 54, 0.9)');
         return;
     }
     
@@ -257,32 +126,35 @@ function handleThrow(event) {
 }
 
 function createPhysicsTrash() {
-    const targetContainer = gameState.binsAnchored 
-        ? document.querySelector('#anchored-bins')
-        : document.querySelector('#marker');
+    // Use persistent container from world-anchor system
+    const container = typeof getPersistentObjectsContainer !== 'undefined' 
+        ? getPersistentObjectsContainer() 
+        : document.querySelector('#world-anchor');
     
-    if (!targetContainer) return;
+    if (!container) return;
     
-    // Buat entity baru untuk trash yang akan dilempar
+    // Create new entity for thrown trash
     const trash = document.createElement('a-entity');
     const trashId = `thrown-trash-${Date.now()}`;
     
-    // Set ukuran berbeda untuk setiap jenis sampah
+    // Different sizes for each trash type
     let trashScale = '0.3 0.3 0.3'; // Default
     if (gameState.currentTrashType === 'organik') {
-        trashScale = '0.2 0.2 0.2'; // Tissue lebih kecil
+        trashScale = '0.2 0.2 0.2'; // Tissue smaller
     } else if (gameState.currentTrashType === 'anorganik') {
-        trashScale = '0.35 0.35 0.35'; // Botol lebih besar
+        trashScale = '0.35 0.35 0.35'; // Bottle bigger
     } else if (gameState.currentTrashType === 'hazardous') {
-        trashScale = '0.3 0.3 0.3'; // Battery ukuran sedang
+        trashScale = '0.3 0.3 0.3'; // Battery medium
     }
+    
+    const modelSrc = gameState.currentTrashType === 'hazardous' ? '#trash-kertas' : `#trash-${gameState.currentTrashType}`;
     
     trash.setAttribute('id', trashId);
     trash.setAttribute('position', '0 0.5 -0.3');
-    trash.setAttribute('gltf-model', `#trash-${gameState.currentTrashType}`);
+    trash.setAttribute('gltf-model', modelSrc);
     trash.setAttribute('scale', trashScale);
     
-    // Tambah physics untuk trash yang dilempar
+    // Add physics to thrown trash
     trash.setAttribute('dynamic-body', {
         shape: 'box',
         mass: 0.5
@@ -291,16 +163,16 @@ function createPhysicsTrash() {
     trash.classList.add('throwable-trash');
     trash.setAttribute('data-trash-type', gameState.currentTrashType);
     
-    targetContainer.appendChild(trash);
+    container.appendChild(trash);
     
-    // Apply throw force setelah physics siap
+    // Apply throw force after physics ready
     setTimeout(() => {
         const trashEl = document.querySelector(`#${trashId}`);
         if (trashEl && trashEl.body) {
-            // Simulasikan throw dengan impulse
+            // Simulate throw with impulse
             const forceX = (Math.random() - 0.5) * 2;
-            const forceY = 5; // Lempar ke atas
-            const forceZ = 8; // Lempar ke depan
+            const forceY = 5; // Throw upward
+            const forceZ = 8; // Throw forward
             
             const impulse = new CANNON.Vec3(forceX, forceY, forceZ);
             trashEl.body.applyImpulse(impulse, new CANNON.Vec3(0, 0, 0));
@@ -314,7 +186,7 @@ function createPhysicsTrash() {
         handleTrashCollision(trash, e);
     });
     
-    // Auto-remove trash setelah 10 detik
+    // Auto-remove trash after 10 seconds
     setTimeout(() => {
         if (trash.parentNode) {
             trash.parentNode.removeChild(trash);
@@ -376,11 +248,26 @@ function hideThrowIndicator() {
     }
 }
 
-// Event Listeners
+// Helper functions for world-anchor.js
+function showThrowHint() {
+    showTrashButtons();
+    const btn = document.getElementById('recenter-btn');
+    if (btn) btn.classList.remove('hidden');
+}
+
+function hideThrowHint() {
+    // Keep buttons visible since bins are anchored
+    hideThrowIndicator();
+}
+
+// Event Listeners for both desktop and mobile
 document.addEventListener('click', handleThrow);
 document.addEventListener('touchstart', (event) => {
-    event.preventDefault();
-    handleThrow(event);
+    // Don't prevent default on buttons
+    if (!event.target.classList.contains('trash-btn') && event.target.id !== 'recenter-btn') {
+        event.preventDefault();
+        handleThrow(event);
+    }
 }, { passive: false });
 
 function logInstructions() {
@@ -388,10 +275,9 @@ function logInstructions() {
     console.log('%cInstructions:', 'color: #2196F3; font-size: 14px;');
     console.log('1. Scan the target marker to anchor the bins');
     console.log('2. Select trash type using the buttons below');
-    console.log('3. View the preview of selected trash');
-    console.log('4. Tap the screen to throw trash into the correct bin');
-    console.log('5. Organic (green), Inorganic (red), Hazardous (blue)');
-    console.log('%c🔗 ANCHOR FEATURE: Bins will stay in place after first scan!', 'color: #FF9800; font-weight: bold;');
-    console.log('%c🎮 NEW FEATURE: Select trash with buttons, no need to rescan!', 'color: #4CAF50; font-weight: bold;');
+    console.log('3. Tap screen (mobile) or click (desktop) to throw trash');
+    console.log('4. Sort into correct bin: Organic (green), Inorganic (red), Hazardous (blue)');
+    console.log('%c🌍 WORLD ANCHOR: Bins will stay in place after first scan!', 'color: #FF9800; font-weight: bold;');
+    console.log('%c🔄 RECENTER: Use recenter button to reposition bins', 'color: #2196F3; font-weight: bold;');
     console.log('%c📝 Debug mode ON - Check console for throw info', 'color: #FF9800');
 }

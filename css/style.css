@@ -64,68 +64,62 @@ a-scene {
     }
 }
 
-/* Trash Selection Buttons */
-#trash-selector {
+/* Trash Buttons Styling */
+#trash-buttons {
     position: fixed;
-    bottom: 100px;
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1000;
     display: flex;
     gap: 15px;
+    z-index: 1000;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 10px;
 }
 
-.trash-button {
-    padding: 15px 25px;
+.trash-btn {
+    padding: 12px 20px;
     border: none;
-    border-radius: 15px;
-    font-size: 16px;
+    border-radius: 10px;
+    font-size: 14px;
     font-weight: bold;
-    color: white;
     cursor: pointer;
+    color: white;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    min-width: 100px;
 }
 
-.trash-button:hover {
+.trash-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
-.trash-button:active {
-    transform: translateY(0);
+.trash-btn:active {
+    transform: translateY(-1px);
 }
 
-.trash-button.selected {
-    border: 3px solid white;
-    transform: scale(1.1);
+.btn-organik {
+    background: linear-gradient(135deg, #27ae60, #229954);
 }
 
-#btn-organik {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
+.btn-organik:hover {
+    background: linear-gradient(135deg, #229954, #1e8449);
 }
 
-#btn-anorganik {
-    background: linear-gradient(135deg, #f44336, #da190b);
+.btn-anorganik {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
 }
 
-#btn-hazardous {
-    background: linear-gradient(135deg, #2196F3, #0b7dda);
+.btn-anorganik:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
 }
 
-/* Trash Preview */
-#trash-preview {
-    position: fixed;
-    top: 150px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 999;
-    width: 200px;
-    height: 200px;
-    pointer-events: none;
+.btn-hazardous {
+    background: linear-gradient(135deg, #3498db, #2980b9);
 }
 
-#trash-preview canvas {
-    width: 100% !important;
-    height: 100% !important;
+.btn-hazardous:hover {
+    background: linear-gradient(135deg, #2980b9, #1f618d);
 }
