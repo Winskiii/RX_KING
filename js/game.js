@@ -14,7 +14,34 @@ const scene = document.querySelector('a-scene');
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM Ready!');
     setupDropdown();
+    
+    // Add test button for debugging
+    addTestButton();
 });
+
+function addTestButton() {
+    const testBtn = document.createElement('button');
+    testBtn.textContent = '🧪 TEST POPUP';
+    testBtn.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 10px 20px;
+        background: purple;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10001;
+    `;
+    testBtn.onclick = () => {
+        console.log('🧪 Test button clicked!');
+        showPopup('🧪 TEST POPUP WORKS!', 'success');
+    };
+    document.body.appendChild(testBtn);
+    console.log('✅ Test button added');
+}
 
 scene.addEventListener('loaded', () => {
     console.log('✅ Scene loaded!');
@@ -25,10 +52,21 @@ scene.addEventListener('loaded', () => {
         initWorldAnchorSystem();
     }
     
-    // Setup bin click handlers after scene loads
+    // Setup bin click handlers multiple times to ensure they work
     setTimeout(() => {
+        console.log('🔧 Setting up bin handlers (1st attempt)...');
         setupBinClickHandlers();
     }, 1000);
+    
+    setTimeout(() => {
+        console.log('🔧 Setting up bin handlers (2nd attempt)...');
+        setupBinClickHandlers();
+    }, 3000);
+    
+    setTimeout(() => {
+        console.log('🔧 Setting up bin handlers (3rd attempt)...');
+        setupBinClickHandlers();
+    }, 5000);
     
     logInstructions();
 });
@@ -69,41 +107,88 @@ function setupDropdown() {
 // Bin Click Handlers
 // ==============================
 function setupBinClickHandlers() {
+    console.log('🔍 Looking for bin models...');
+    
     // Find all bin models (the actual GLB models)
     const bins = document.querySelectorAll('.bin-model');
-    console.log(`🗑️ Found ${bins.length} bin models`);
+    console.log(`🗑️ Found ${bins.length} bin models with .bin-model class`);
     
-    bins.forEach(bin => {
+    // Also try finding by gltf-model tag
+    const allGltfModels = document.querySelectorAll('a-gltf-model');
+    console.log(`📦 Found ${allGltfModels.length} total a-gltf-model elements`);
+    
+    // Filter for bin models specifically
+    const binModels = Array.from(allGltfModels).filter(model => {
+        return model.getAttribute('data-bin-type') !== null;
+    });
+    console.log(`🎯 Found ${binModels.length} models with data-bin-type attribute`);
+    
+    if (binModels.length === 0) {
+        console.error('❌ No bin models found! Retrying in 2 seconds...');
+        setTimeout(setupBinClickHandlers, 2000);
+        return;
+    }
+    
+    binModels.forEach(bin => {
         const binType = bin.getAttribute('data-bin-type');
-        console.log(`  Setting up bin model: ${binType}`);
+        console.log(`  📍 Setting up bin model: ${binType}`);
         
-        // Add click event listener
-        bin.addEventListener('click', (e) => {
-            e.stopPropagation();
-            console.log('🖱️ Bin model clicked!');
-            handleBinClick(binType);
-        });
+        // Remove old listeners first
+        bin.removeEventListener('click', bin._clickHandler);
+        bin.removeEventListener('mousedown', bin._mouseHandler);
+        bin.removeEventListener('touchstart', bin._touchHandler);
         
-        // Also add for mobile touch
-        bin.addEventListener('touchstart', (e) => {
+        // Create handler functions
+        bin._clickHandler = (e) => {
+            console.log('🖱️ CLICK event on bin:', binType);
             e.stopPropagation();
-            console.log('👆 Bin model touched!');
+            e.preventDefault();
             handleBinClick(binType);
-        });
+        };
+        
+        bin._mouseHandler = (e) => {
+            console.log('🖱️ MOUSEDOWN event on bin:', binType);
+            e.stopPropagation();
+            e.preventDefault();
+            handleBinClick(binType);
+        };
+        
+        bin._touchHandler = (e) => {
+            console.log('👆 TOUCHSTART event on bin:', binType);
+            e.stopPropagation();
+            e.preventDefault();
+            handleBinClick(binType);
+        };
+        
+        // Add event listeners for desktop and mobile
+        bin.addEventListener('click', bin._clickHandler);
+        bin.addEventListener('mousedown', bin._mouseHandler);
+        bin.addEventListener('touchstart', bin._touchHandler, { passive: false });
+        
+        console.log(`  ✅ Handlers attached to ${binType} bin`);
     });
     
-    console.log('✅ Bin click handlers initialized');
+    console.log('✅ All bin click handlers initialized successfully');
 }
 
 function handleBinClick(binType) {
-    console.log('🎯 Bin clicked:', binType);
+    console.log('');
+    console.log('='.repeat(50));
+    console.log('🎯 handleBinClick CALLED!');
+    console.log('   Bin Type:', binType);
+    console.log('   Selected Trash:', gameState.selectedTrashType);
+    console.log('='.repeat(50));
+    console.log('');
     
     // Check if trash type is selected
     if (!gameState.selectedTrashType) {
         console.log('⚠️ No trash type selected!');
         showPopup('⚠️ SELECT TRASH TYPE FIRST!', 'warning');
+        updateThrowIndicator('⚠️ Select trash type from dropdown!', 'rgba(255, 152, 0, 0.9)');
         return;
     }
+    
+    console.log(`🔍 Comparing: "${gameState.selectedTrashType}" === "${binType}"`);
     
     // Verify match
     if (gameState.selectedTrashType === binType) {
@@ -111,6 +196,7 @@ function handleBinClick(binType) {
         console.log('🎉 CORRECT! Trash matches bin!');
         updateScore(10);
         showPopup('🎉 CORRECT!\n+10 Points!', 'success');
+        updateThrowIndicator('🎉 CORRECT! +10 Points!', 'rgba(76, 175, 80, 0.9)');
         
         // Add visual feedback to bin
         flashBin(binType, true);
@@ -133,6 +219,7 @@ function handleBinClick(binType) {
         };
         console.log(`❌ WRONG! ${trashNames[gameState.selectedTrashType]} doesn't go in ${binType} bin!`);
         showPopup(`❌ WRONG!\n${trashNames[gameState.selectedTrashType]} ≠ ${binNames[binType]}\n\n🔄 TRY AGAIN!`, 'error');
+        updateThrowIndicator(`❌ WRONG! Try another bin!`, 'rgba(244, 67, 54, 0.9)');
         
         // Add negative visual feedback
         flashBin(binType, false);
