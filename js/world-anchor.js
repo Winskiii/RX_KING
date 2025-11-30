@@ -119,6 +119,7 @@ function cloneMarkerContents(sourceMarker, targetGroup) {
     const children = Array.from(sourceMarker.children);
     
     children.forEach(child => {
+        // Skip trash-display (removed in new version)
         if (child.id === 'trash-display') return;
         
         const clone = child.cloneNode(true);
@@ -135,6 +136,14 @@ function cloneMarkerContents(sourceMarker, targetGroup) {
     });
     
     console.log('✅ All objects cloned to world space');
+    
+    // Re-setup bin click handlers for cloned bins
+    setTimeout(() => {
+        if (typeof setupBinClickHandlers !== 'undefined') {
+            console.log('🔄 Re-initializing bin click handlers for cloned bins...');
+            setupBinClickHandlers();
+        }
+    }, 500);
 }
 
 function setupRecenterButton() {

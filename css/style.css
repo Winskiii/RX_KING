@@ -64,62 +64,65 @@ a-scene {
     }
 }
 
-/* Trash Buttons Styling */
-#trash-buttons {
+@keyframes popupIn {
+    from {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes popupOut {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* Trash Selector Dropdown Styling */
+#trash-selector {
     position: fixed;
     bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 15px;
+    align-items: center;
+    gap: 10px;
     z-index: 1000;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 0 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-.trash-btn {
+#trash-dropdown {
     padding: 12px 20px;
-    border: none;
+    border: 2px solid #4CAF50;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    color: white;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    min-width: 100px;
+    min-width: 250px;
 }
 
-.trash-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+#trash-dropdown:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.5);
+    border-color: #66BB6A;
 }
 
-.trash-btn:active {
-    transform: translateY(-1px);
-}
-
-.btn-organik {
-    background: linear-gradient(135deg, #27ae60, #229954);
-}
-
-.btn-organik:hover {
-    background: linear-gradient(135deg, #229954, #1e8449);
-}
-
-.btn-anorganik {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-}
-
-.btn-anorganik:hover {
-    background: linear-gradient(135deg, #c0392b, #a93226);
-}
-
-.btn-hazardous {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-}
-
-.btn-hazardous:hover {
-    background: linear-gradient(135deg, #2980b9, #1f618d);
+#trash-dropdown:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
 }

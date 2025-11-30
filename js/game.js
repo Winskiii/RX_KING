@@ -1,12 +1,10 @@
-/* AR Trash Sorting Game - Combined with World Anchor */
+/* AR Trash Sorting Game - Dropdown + Click Bin Version */
 
 // Game State
 const gameState = {
     score: 0,
-    isMarkerVisible: false,
     sceneReady: false,
-    currentTrashType: null,
-    isLookingAtMarker: false
+    selectedTrashType: null
 };
 
 // Initialize game
@@ -15,8 +13,7 @@ const scene = document.querySelector('a-scene');
 // Wait for document ready before setup
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📄 DOM Ready!');
-    setupTrashButtons();
-    setupTouchDragControls();
+    setupDropdown();
 });
 
 scene.addEventListener('loaded', () => {
@@ -28,432 +25,203 @@ scene.addEventListener('loaded', () => {
         initWorldAnchorSystem();
     }
     
-    // Check if models are loaded
+    // Setup bin click handlers after scene loads
     setTimeout(() => {
-        const organikModel = document.querySelector('#trash-model-organik');
-        const anorganikModel = document.querySelector('#trash-model-anorganik');
-        const hazardousModel = document.querySelector('#trash-model-hazardous');
-        
-        console.log('%c🎨 Checking trash models...', 'color: #9C27B0; font-weight: bold;');
-        console.log('Organik model:', organikModel ? '✅ Found' : '❌ Missing');
-        console.log('Anorganik model:', anorganikModel ? '✅ Found' : '❌ Missing');
-        console.log('Hazardous model:', hazardousModel ? '✅ Found' : '❌ Missing');
-        
-        if (organikModel) {
-            organikModel.addEventListener('model-loaded', () => {
-                console.log('✅ ORGANIC model GLB loaded');
-            });
-        }
-        if (anorganikModel) {
-            anorganikModel.addEventListener('model-loaded', () => {
-                console.log('✅ INORGANIC model GLB loaded');
-            });
-        }
-        if (hazardousModel) {
-            hazardousModel.addEventListener('model-loaded', () => {
-                console.log('✅ HAZARDOUS model GLB loaded');
-            });
-        }
+        setupBinClickHandlers();
     }, 1000);
     
     logInstructions();
 });
 
-function setupTrashButtons() {
-    const btnOrganik = document.getElementById('btn-organik');
-    const btnAnorganik = document.getElementById('btn-anorganik');
-    const btnHazardous = document.getElementById('btn-hazardous');
-    
-    if (btnOrganik) {
-        btnOrganik.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleTrashSelection('organik');
-        });
-    }
-    if (btnAnorganik) {
-        btnAnorganik.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleTrashSelection('anorganik');
-        });
-    }
-    if (btnHazardous) {
-        btnHazardous.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleTrashSelection('hazardous');
-        });
-    }
-}
-
-function handleTrashSelection(trashType) {
-    console.log('🗑️ Selected trash type:', trashType);
-    gameState.currentTrashType = trashType;
-    
-    const trashNames = {
-        'organik': 'ORGANIC',
-        'anorganik': 'INORGANIC',
-        'hazardous': 'HAZARDOUS'
-    };
-    
-    // Show the trash display
-    showTrashDisplay(trashType);
-    activatePreviewDrag();
-    
-    updateThrowIndicator(`Throw ${trashNames[trashType]}! Tap to throw!`, 'rgba(255, 152, 0, 0.9)');
-}
-
-function showTrashDisplay(trashType) {
-    console.log('🔍 showTrashDisplay called with:', trashType);
-    console.log('Scene ready?', gameState.sceneReady);
-    
-    // Wait for scene if not ready
-    if (!gameState.sceneReady) {
-        console.warn('⏳ Scene not ready, waiting...');
-        setTimeout(() => showTrashDisplay(trashType), 500);
-        return;
-    }
-    
-    // Get all trash models
-    const organikModel = document.querySelector('#trash-model-organik');
-    const anorganikModel = document.querySelector('#trash-model-anorganik');
-    const hazardousModel = document.querySelector('#trash-model-hazardous');
-    const trashDisplay = document.querySelector('#trash-display');
-    
-    console.log('📦 Elements found:', {
-        organik: !!organikModel,
-        anorganik: !!anorganikModel,
-        hazardous: !!hazardousModel,
-        display: !!trashDisplay
-    });
-    
-    if (!organikModel || !anorganikModel || !hazardousModel) {
-        console.error('❌ Models not found! Checking scene...');
-        console.log('Scene children:', scene.children.length);
-        return;
-    }
-    
-    // Make sure trash-display is visible
-    if (trashDisplay) {
-        trashDisplay.object3D.visible = true;
-        console.log('✓ trash-display container visible');
-    }
-    
-    // Hide all trash models first
-    organikModel.object3D.visible = false;
-    anorganikModel.object3D.visible = false;
-    hazardousModel.object3D.visible = false;
-    
-    console.log('✓ All models hidden');
-    
-    // Show only the selected trash type
-    let selectedModel = null;
-    if (trashType === 'organik') {
-        selectedModel = organikModel;
-        console.log('👉 Showing ORGANIC model');
-    } else if (trashType === 'anorganik') {
-        selectedModel = anorganikModel;
-        console.log('👉 Showing INORGANIC model');
-    } else if (trashType === 'hazardous') {
-        selectedModel = hazardousModel;
-        console.log('👉 Showing HAZARDOUS model');
-    }
-    
-    if (selectedModel) {
-        // Use object3D.visible for immediate effect
-        selectedModel.object3D.visible = true;
-        selectedModel.setAttribute('visible', 'true');
-        
-        // Add scale animation (scale to 0.12 to match HTML)
-        selectedModel.setAttribute('scale', '0.01 0.01 0.01');
-        selectedModel.setAttribute('animation', {
-            property: 'scale',
-            from: '0.01 0.01 0.01',
-            to: '0.12 0.12 0.12',
-            dur: 500,
-            easing: 'easeOutElastic'
-        });
-        
-        console.log('✅ Model visible:', selectedModel.object3D.visible);
-        console.log('Position:', selectedModel.object3D.position);
-        console.log('Scale:', selectedModel.object3D.scale);
-    } else {
-        console.error('❌ No model selected for type:', trashType);
-    }
-}
-
 // ==============================
-// Touch drag + throw interaction
+// Dropdown Handler
 // ==============================
-let dragState = {
-    active: false,
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    lastY: 0,
-    lastTime: 0,
-    vx: 0,
-    vy: 0
-};
-
-function setupTouchDragControls() {
-    document.addEventListener('touchstart', onTouchStart, { passive: false });
-    document.addEventListener('touchmove', onTouchMove, { passive: false });
-    document.addEventListener('touchend', onTouchEnd, { passive: true });
-}
-
-function getActivePreviewModel() {
-    const o = document.querySelector('#trash-model-organik');
-    const a = document.querySelector('#trash-model-anorganik');
-    const h = document.querySelector('#trash-model-hazardous');
-    if (o && o.getAttribute('visible') === true) return o;
-    if (a && a.getAttribute('visible') === true) return a;
-    if (h && h.getAttribute('visible') === true) return h;
-    return null;
-}
-
-function activatePreviewDrag() {
-    // Center preview near bottom
-    const display = document.querySelector('#trash-display');
-    if (display) {
-        display.setAttribute('position', '0 -0.3 -0.4');
-    }
-    dragState.active = false;
-}
-
-function onTouchStart(e) {
-    // Ignore touches on UI buttons
-    if (e.target.classList && e.target.classList.contains('trash-btn')) return;
-    if (!gameState.currentTrashType) return;
-    const model = getActivePreviewModel();
-    if (!model) return;
-
-    e.preventDefault();
-    const t = e.touches[0];
-    dragState.active = true;
-    dragState.startX = dragState.lastX = t.clientX;
-    dragState.startY = dragState.lastY = t.clientY;
-    dragState.lastTime = performance.now();
-}
-
-function onTouchMove(e) {
-    if (!dragState.active) return;
-    const model = getActivePreviewModel();
-    if (!model) return;
-    e.preventDefault();
-    const t = e.touches[0];
-    const now = performance.now();
-
-    // Map screen movement to small offsets in world space
-    const dx = (t.clientX - dragState.lastX) / window.innerWidth; // -1..1
-    const dy = (t.clientY - dragState.lastY) / window.innerHeight;
-
-    const pos = model.object3D.position;
-    // In screen space: right increases X, down increases Y
-    pos.x += dx * 0.5;   // horizontal drag range
-    pos.y -= dy * 0.5;   // invert so up moves up
-    model.object3D.position.copy(pos);
-
-    // velocity estimation
-    const dt = Math.max(1, now - dragState.lastTime);
-    dragState.vx = (t.clientX - dragState.lastX) / dt; // px/ms
-    dragState.vy = (t.clientY - dragState.lastY) / dt;
-    dragState.lastX = t.clientX;
-    dragState.lastY = t.clientY;
-    dragState.lastTime = now;
-}
-
-function onTouchEnd() {
-    if (!dragState.active) return;
-    dragState.active = false;
-
-    // Convert swipe velocity to throw
-    const throwStrengthX = dragState.vx * 0.02; // tune factors
-    const throwStrengthY = -dragState.vy * 0.05; // upward when swipe up
-    const forwardStrength = 6; // constant forward
-
-    // Spawn physics trash at preview position
-    const container = typeof getPersistentObjectsContainer !== 'undefined' 
-        ? getPersistentObjectsContainer() 
-        : document.querySelector('#world-anchor');
-    if (!container) return;
-
-    const posRef = getActivePreviewModel();
-    const startPos = posRef ? posRef.object3D.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 0.2, -0.3);
-
-    const trash = document.createElement('a-entity');
-    const trashId = `thrown-trash-${Date.now()}`;
-    const modelSrc = gameState.currentTrashType === 'hazardous' ? '#trash-hazardous' : `#trash-${gameState.currentTrashType}`;
-
-    trash.setAttribute('id', trashId);
-    trash.setAttribute('position', `${startPos.x} ${startPos.y} ${startPos.z}`);
-    trash.setAttribute('gltf-model', modelSrc);
-    trash.setAttribute('scale', gameState.currentTrashType === 'anorganik' ? '0.35 0.35 0.35' : (gameState.currentTrashType === 'organik' ? '0.2 0.2 0.2' : '0.3 0.3 0.3'));
-    trash.setAttribute('dynamic-body', { shape: 'box', mass: 0.5 });
-    trash.classList.add('throwable-trash');
-    trash.setAttribute('data-trash-type', gameState.currentTrashType);
-    container.appendChild(trash);
-
-    // Apply impulse
-    setTimeout(() => {
-        const el = document.querySelector(`#${trashId}`);
-        if (el && el.body) {
-            const impulse = new CANNON.Vec3(throwStrengthX, Math.max(2, throwStrengthY), forwardStrength);
-            el.body.applyImpulse(impulse, new CANNON.Vec3(0, 0, 0));
-            updateThrowIndicator('🚀 THROW!', 'rgba(255, 152, 0, 0.9)');
-        }
-    }, 50);
-
-    // Hide preview models after throw
-    const o = document.querySelector('#trash-model-organik');
-    const a = document.querySelector('#trash-model-anorganik');
-    const h = document.querySelector('#trash-model-hazardous');
-    if (o) o.setAttribute('visible', 'false');
-    if (a) a.setAttribute('visible', 'false');
-    if (h) h.setAttribute('visible', 'false');
-}
-
-function hideTrashDisplay() {
-    const organikModel = document.querySelector('#trash-model-organik');
-    const anorganikModel = document.querySelector('#trash-model-anorganik');
-    const hazardousModel = document.querySelector('#trash-model-hazardous');
-    
-    if (organikModel) organikModel.setAttribute('visible', 'false');
-    if (anorganikModel) anorganikModel.setAttribute('visible', 'false');
-    if (hazardousModel) hazardousModel.setAttribute('visible', 'false');
-}
-
-function showTrashButtons() {
-    const buttons = document.getElementById('trash-buttons');
-    if (buttons) {
-        buttons.classList.remove('hidden');
-    }
-}
-
-function hideTrashButtons() {
-    const buttons = document.getElementById('trash-buttons');
-    if (buttons) {
-        buttons.classList.add('hidden');
-    }
-    hideTrashDisplay();
-}
-
-function handleThrow(event) {
-    // Prevent throw if clicking on buttons
-    if (event.target.classList.contains('trash-btn') || event.target.id === 'recenter-btn') {
+function setupDropdown() {
+    const dropdown = document.getElementById('trash-dropdown');
+    if (!dropdown) {
+        console.error('❌ Dropdown not found!');
         return;
     }
     
-    if (!gameState.sceneReady) {
-        console.log('⏳ Scene not ready yet...');
-        return;
-    }
-    
-    if (!gameState.currentTrashType) {
-        console.log('⚠️ No trash selected!');
-        updateThrowIndicator('⚠️ Select trash first!', 'rgba(244, 67, 54, 0.9)');
-        return;
-    }
-    
-    if (!worldTrackingState || !worldTrackingState.hasSpawned) {
-        console.log('⚠️ Bins not anchored yet!');
-        updateThrowIndicator('⚠️ Scan marker first!', 'rgba(244, 67, 54, 0.9)');
-        return;
-    }
-    
-    console.log('🚀 Throwing trash:', gameState.currentTrashType);
-    createPhysicsTrash();
-}
-
-function createPhysicsTrash() {
-    // Use persistent container from world-anchor system
-    const container = typeof getPersistentObjectsContainer !== 'undefined' 
-        ? getPersistentObjectsContainer() 
-        : document.querySelector('#world-anchor');
-    
-    if (!container) return;
-    
-    // Create new entity for thrown trash
-    const trash = document.createElement('a-entity');
-    const trashId = `thrown-trash-${Date.now()}`;
-    
-    // Different sizes for each trash type
-    let trashScale = '0.6 0.6 0.6'; // Default
-    if (gameState.currentTrashType === 'organik') {
-        trashScale = '0.06 0.06 0.06'; // Tissue smaller
-    } else if (gameState.currentTrashType === 'anorganik') {
-        trashScale = '0.3 0.3 0.3'; // Bottle bigger
-    } else if (gameState.currentTrashType === 'hazardous') {
-        trashScale = '0.9 0.9 0.9'; // Battery medium
-    }
-    
-    const modelSrc = gameState.currentTrashType === 'hazardous' ? '#trash-hazardous' : `#trash-${gameState.currentTrashType}`;
-    
-    trash.setAttribute('id', trashId);
-    trash.setAttribute('position', '0 0.2 -0.6');
-    trash.setAttribute('gltf-model', modelSrc);
-    trash.setAttribute('scale', trashScale);
-    
-    // Add physics to thrown trash
-    trash.setAttribute('dynamic-body', {
-        shape: 'box',
-        mass: 0.5
-    });
-    
-    trash.classList.add('throwable-trash');
-    trash.setAttribute('data-trash-type', gameState.currentTrashType);
-    
-    container.appendChild(trash);
-    
-    // Apply throw force after physics ready
-    setTimeout(() => {
-        const trashEl = document.querySelector(`#${trashId}`);
-        if (trashEl && trashEl.body) {
-            // Simulate throw with impulse
-            const forceX = (Math.random() - 0.5) * 2;
-            const forceY = 5; // Throw upward
-            const forceZ = 8; // Throw forward
+    dropdown.addEventListener('change', (e) => {
+        const selected = e.target.value;
+        if (selected) {
+            gameState.selectedTrashType = selected;
+            console.log('🗑️ Selected trash type:', selected);
             
-            const impulse = new CANNON.Vec3(forceX, forceY, forceZ);
-            trashEl.body.applyImpulse(impulse, new CANNON.Vec3(0, 0, 0));
+            const trashNames = {
+                'organik': 'ORGANIC',
+                'anorganik': 'INORGANIC',
+                'hazardous': 'HAZARDOUS'
+            };
             
-            updateThrowIndicator('🚀 THROW!', 'rgba(255, 152, 0, 0.9)');
-        }
-    }, 100);
-    
-    // Setup collision detection
-    trash.addEventListener('collide', (e) => {
-        handleTrashCollision(trash, e);
-    });
-    
-    // Auto-remove trash after 10 seconds
-    setTimeout(() => {
-        if (trash.parentNode) {
-            trash.parentNode.removeChild(trash);
-        }
-    }, 10000);
-}
-
-function handleTrashCollision(trash, event) {
-    const collidedEl = event.detail.body.el;
-    const trashType = trash.getAttribute('data-trash-type');
-    
-    if (collidedEl && collidedEl.classList.contains('goal-zone')) {
-        const binType = collidedEl.getAttribute('data-bin-type');
-        
-        if (trashType === binType) {
-            // Correct!
-            console.log('🎉 CORRECT! Trash', trashType, 'goes into bin', binType);
-            updateScore(10);
-            updateThrowIndicator('🎉 CORRECT! +10 Points!', 'rgba(76, 175, 80, 0.9)');
-            trash.setAttribute('visible', 'false');
+            updateThrowIndicator(`✅ ${trashNames[selected]} selected! Click correct bin!`, 'rgba(76, 175, 80, 0.9)');
         } else {
-            // Wrong bin
-            console.log('❌ WRONG! Trash', trashType, 'should go to', trashType, 'bin');
-            updateThrowIndicator(`❌ WRONG! That's ${trashType} trash, not ${binType}!`, 'rgba(244, 67, 54, 0.9)');
+            gameState.selectedTrashType = null;
+            hideThrowIndicator();
         }
+    });
+    
+    console.log('✅ Dropdown initialized');
+}
+
+// ==============================
+// Bin Click Handlers
+// ==============================
+function setupBinClickHandlers() {
+    // Find all bin models (the actual GLB models)
+    const bins = document.querySelectorAll('.bin-model');
+    console.log(`🗑️ Found ${bins.length} bin models`);
+    
+    bins.forEach(bin => {
+        const binType = bin.getAttribute('data-bin-type');
+        console.log(`  Setting up bin model: ${binType}`);
+        
+        // Add click event listener
+        bin.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('🖱️ Bin model clicked!');
+            handleBinClick(binType);
+        });
+        
+        // Also add for mobile touch
+        bin.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            console.log('👆 Bin model touched!');
+            handleBinClick(binType);
+        });
+    });
+    
+    console.log('✅ Bin click handlers initialized');
+}
+
+function handleBinClick(binType) {
+    console.log('🎯 Bin clicked:', binType);
+    
+    // Check if trash type is selected
+    if (!gameState.selectedTrashType) {
+        console.log('⚠️ No trash type selected!');
+        showPopup('⚠️ SELECT TRASH TYPE FIRST!', 'warning');
+        return;
+    }
+    
+    // Verify match
+    if (gameState.selectedTrashType === binType) {
+        // CORRECT!
+        console.log('🎉 CORRECT! Trash matches bin!');
+        updateScore(10);
+        showPopup('🎉 CORRECT!\n+10 Points!', 'success');
+        
+        // Add visual feedback to bin
+        flashBin(binType, true);
+        
+        // Reset selection after delay
+        setTimeout(() => {
+            resetSelection();
+        }, 1500);
+    } else {
+        // WRONG!
+        const trashNames = {
+            'organik': 'ORGANIC',
+            'anorganik': 'INORGANIC',
+            'hazardous': 'HAZARDOUS'
+        };
+        const binNames = {
+            'organik': 'ORGANIC',
+            'anorganik': 'INORGANIC',
+            'hazardous': 'HAZARDOUS'
+        };
+        console.log(`❌ WRONG! ${trashNames[gameState.selectedTrashType]} doesn't go in ${binType} bin!`);
+        showPopup(`❌ WRONG!\n${trashNames[gameState.selectedTrashType]} ≠ ${binNames[binType]}\n\n🔄 TRY AGAIN!`, 'error');
+        
+        // Add negative visual feedback
+        flashBin(binType, false);
+        
+        // Don't reset selection - let user try again
     }
 }
 
+function flashBin(binType, isCorrect) {
+    // Find the bin container
+    const bins = document.querySelectorAll('.bin-container');
+    bins.forEach(binContainer => {
+        const goalZone = binContainer.querySelector(`[data-bin-type="${binType}"]`);
+        if (goalZone) {
+            const model = binContainer.querySelector('a-gltf-model');
+            if (model) {
+                // Flash animation
+                const color = isCorrect ? '#4CAF50' : '#F44336';
+                model.setAttribute('animation', {
+                    property: 'scale',
+                    from: '0.5 0.5 0.5',
+                    to: '0.55 0.55 0.55',
+                    dur: 200,
+                    dir: 'alternate',
+                    loop: 2
+                });
+            }
+        }
+    });
+}
+
+function resetSelection() {
+    gameState.selectedTrashType = null;
+    const dropdown = document.getElementById('trash-dropdown');
+    if (dropdown) {
+        dropdown.value = '';
+    }
+    
+    setTimeout(() => {
+        hideThrowIndicator();
+    }, 2000);
+}
+
+// ==============================
 // UI Functions
+// ==============================
+function showPopup(message, type = 'info') {
+    // Remove existing popup if any
+    let popup = document.getElementById('game-popup');
+    if (popup) {
+        popup.remove();
+    }
+    
+    // Create new popup
+    popup = document.createElement('div');
+    popup.id = 'game-popup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: ${type === 'success' ? 'rgba(76, 175, 80, 0.95)' : (type === 'error' ? 'rgba(244, 67, 54, 0.95)' : 'rgba(255, 152, 0, 0.95)')};
+        color: white;
+        padding: 30px 50px;
+        border-radius: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        z-index: 10000;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        animation: popupIn 0.3s ease-out;
+        white-space: pre-line;
+        max-width: 80%;
+    `;
+    
+    popup.innerHTML = message;
+    document.body.appendChild(popup);
+    
+    // Auto remove after 2 seconds
+    setTimeout(() => {
+        if (popup && popup.parentNode) {
+            popup.style.animation = 'popupOut 0.3s ease-in';
+            setTimeout(() => popup.remove(), 300);
+        }
+    }, 2000);
+    
+    console.log('📢 Popup shown:', message);
+}
+
 function updateScore(points) {
     gameState.score += points;
     const scoreDisplay = document.getElementById('score-display');
@@ -473,10 +241,6 @@ function updateThrowIndicator(message, backgroundColor) {
     throwIndicator.textContent = message;
     throwIndicator.style.background = backgroundColor;
     throwIndicator.classList.remove('hidden');
-    
-    setTimeout(() => {
-        throwIndicator.classList.add('hidden');
-    }, 2000);
 }
 
 function hideThrowIndicator() {
@@ -486,28 +250,34 @@ function hideThrowIndicator() {
     }
 }
 
-// Event Listeners for both desktop and mobile
-document.addEventListener('click', handleThrow);
-document.addEventListener('touchstart', (event) => {
-    // Don't prevent default on buttons
-    if (!event.target.classList.contains('trash-btn') && event.target.id !== 'recenter-btn') {
-        event.preventDefault();
-        handleThrow(event);
+// Helper functions for world-anchor.js compatibility
+function showTrashButtons() {
+    const selector = document.getElementById('trash-selector');
+    if (selector) {
+        selector.style.display = 'flex';
     }
-}, { passive: false });
+}
+
+function hideTrashButtons() {
+    const selector = document.getElementById('trash-selector');
+    if (selector) {
+        selector.style.display = 'none';
+    }
+}
 
 function logInstructions() {
     console.log('%c🎯 AR Trash Sorting Game Loaded!', 'color: #4CAF50; font-size: 20px; font-weight: bold;');
     console.log('%cInstructions:', 'color: #2196F3; font-size: 14px;');
     console.log('1. Scan the target marker to anchor the bins');
-    console.log('2. Select trash type using the buttons below');
-    console.log('3. Tap screen (mobile) or click (desktop) to throw trash');
-    console.log('4. Sort into correct bin: Organic (green), Inorganic (red), Hazardous (blue)');
+    console.log('2. Select trash type from the dropdown');
+    console.log('3. Click the correct bin to score points');
+    console.log('4. Match: Organic→Green, Inorganic→Red, Hazardous→Blue');
     console.log('%c🌍 WORLD ANCHOR: Bins will stay in place after first scan!', 'color: #FF9800; font-weight: bold;');
     console.log('%c🔄 RECENTER: Use recenter button to reposition bins', 'color: #2196F3; font-weight: bold;');
-    console.log('%c📝 Debug mode ON - Check console for throw info', 'color: #FF9800');
 }
 
 // Export functions for world-anchor.js
 window.showTrashButtons = showTrashButtons;
 window.hideTrashButtons = hideTrashButtons;
+window.updateThrowIndicator = updateThrowIndicator;
+window.hideThrowIndicator = hideThrowIndicator;
